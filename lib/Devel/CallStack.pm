@@ -9,7 +9,7 @@ use vars qw($VERSION
 	    $Import
 	    %Cumul);
 
-$VERSION = '0.16';
+$VERSION = '0.17';
 $Depth = 1e9; # If someone has a callstack this deep, we are in trouble.
 $Import = 0;
 
@@ -128,6 +128,10 @@ Devel::CallStack - record the subroutine calling stacks
     perl -d:CallStack ...
 
 =head1 DESCRIPTION
+
+The Devel::CallStack is meant for code developers wondering why their
+code is running so slow.  One possible reason is simply too many
+subroutine (method) calls since they are not cheap in Perl.
 
 The Devel::CallStack records the subroutine calling stacks, how many
 times each calling stack is being called.  By default the results are
@@ -294,6 +298,55 @@ statistics, simply call Devel::CallStack::set().
 To write out the statistics accumulated so far, call
 Devel::CallStack::write().  This overwrites the existing output file
 unless the C<Append> option is used.  You need do any file renaming yourself.
+
+=head1 POSSIBILITIES
+
+Now you've run your code with Devel::CallStack.  Now what?
+
+If you see that a method or a subroutine is called several thousand times
+while the upper layers are called only a few times:
+
+=over 4
+
+=item *
+
+First of all try your code with different input: how does the number
+of calls vary?  Linear, logarithmic, squared, cubed?  Have you picked
+the right algorithm?  You are not reimplementing something from the
+Perl core that might have either a better algorithm or simply a faster
+implementation?  (For example sort().)
+
+=item *
+
+You may manually inline the method or subroutine code to its callers.
+Downsides include harder maintenance (remember to document/comment the
+inlining both to the callers and to the original code), upsides
+include faster execution.
+
+=item *
+
+You may manually or (preferably) automatically cache the computation,
+whenever reasonable and possible.  Use for example the L<Memoize>
+module.  Downsides include more memory usage, upsides include faster
+execution.
+
+=back
+
+If you see certain deepish code paths having only a few callers
+(or even just a single one):
+
+=over 4
+
+=item *
+
+Maybe you have several layers of subroutines calling each other always
+along the same paths - you could possibly collapse/inline several
+levels of these subroutines into fewer ones, or even just a single one.
+(If you still need to have some of the intermediate functions
+separately, you may consider maintaining separate functions for those,
+but remember to document/comment the fact profusely.)
+
+=back
 
 =head1 KNOWN PROBLEMS
 

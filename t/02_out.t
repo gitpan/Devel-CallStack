@@ -8,16 +8,18 @@ BEGIN {
 
 sub cleanup {
     1 while unlink("callstack.out");
+    1 while unlink("out.out");
 }
 
 cleanup();
-
-if (callstack("reverse")) {
-    if (-e "callstack.out") {
-	ok(file_equal("callstack.out", "cs3.out"));
+if (callstack("out=out.out")) {
+    if (-e "out.out") {
+	ok(file_equal("out.out", "cs2.out"));
     } else {
 	die "failed to create callstack.out\n";
     }
+} else {
+    die "$0: running perl -d:CallStack failed: ($?)\n";
 }
 
 END {

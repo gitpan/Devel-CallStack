@@ -1,6 +1,15 @@
+2004-12-12  Jarkko Hietaniemi  <jhi@iki.fi>
+
+	* Cleanup the tests and MANIFEST.
+
+	* Give hints on how to proceed with the findings of Devel::CallStack
+	  (section POSSIBILITIES).
+	
+	* Release 0.17.
+
 2004-12-11  Jarkko Hietaniemi  <jhi@iki.fi>
 
-	* Require to 5.6.1 or newer, unfortunately.
+	* Require 5.6.1 or newer, unfortunately.
 	
 	* Release 0.16.
 

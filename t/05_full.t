@@ -12,7 +12,7 @@ sub cleanup {
 
 cleanup();
 
-if (callstack("2,reverse,full")) {
+if (callstack("full")) {
     if (-e "callstack.out") {
 	ok(file_equal("callstack.out", "cs5.out"));
     } else {

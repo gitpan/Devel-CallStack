@@ -14,7 +14,7 @@ cleanup();
 
 if (callstack("depth=2")) {
     if (-e "callstack.out") {
-	ok(file_equal("callstack.out", "cs2a.out"));
+	ok(file_equal("callstack.out", "cs3a.out"));
     } else {
 	die "failed to create callstack.out\n";
     }
@@ -23,7 +23,7 @@ if (callstack("depth=2")) {
 cleanup();
 if (callstack("2")) {
     if (-e "callstack.out") {
-	ok(file_equal("callstack.out", "cs2a.out"));
+	ok(file_equal("callstack.out", "cs3a.out"));
     } else {
 	die "failed to create callstack.out\n";
     }
@@ -34,7 +34,7 @@ if (callstack("2")) {
 cleanup();
 if (callstack("1")) {
     if (-e "callstack.out") {
-	ok(file_equal("callstack.out", "cs2b.out"));
+	ok(file_equal("callstack.out", "cs3b.out"));
     } else {
 	die "failed to create callstack.out\n";
     }
@@ -45,7 +45,7 @@ if (callstack("1")) {
 cleanup();
 if (callstack("0")) {
     if (-e "callstack.out") {
-	ok(file_equal("callstack.out", "cs2c.out"));
+	ok(file_equal("callstack.out", "cs3c.out"));
     } else {
 	die "failed to create callstack.out\n";
     }

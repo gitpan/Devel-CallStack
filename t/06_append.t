@@ -14,15 +14,15 @@ cleanup();
 
 if (callstack("3", "set.pl")) {
     if (-e "callstack.out") {
-	ok(file_equal("callstack.out", "cs7a.out"));
+	ok(file_equal("callstack.out", "cs6a.out"));
     } else {
 	die "failed to create callstack.out\n";
     }
 }
 
-if (callstack("3", "reset.pl")) {
+if (callstack("3,append", "set.pl")) {
     if (-e "callstack.out") {
-	ok(file_equal("callstack.out", "cs7b.out"));
+	ok(file_equal("callstack.out", "cs6b.out"));
     } else {
 	die "failed to create callstack.out\n";
     }
