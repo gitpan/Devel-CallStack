@@ -5,11 +5,11 @@ require 5.006001;
 use strict;
 
 use vars qw($VERSION
-	    $Depth $Full $Reverse $Stdout $Stderr $Out $Append
+	    $Depth $Full $Reverse $Stdout $Stderr $Out $In $Append
 	    $Import
 	    %Cumul);
 
-$VERSION = '0.17';
+$VERSION = '0.18';
 $Depth = 1e9; # If someone has a callstack this deep, we are in trouble.
 $Import = 0;
 
@@ -28,6 +28,8 @@ sub import {
 	    $Stderr = 1;
 	} elsif ($i =~ /^out=(.+)/) {
 	    $Out = $1;
+	} elsif ($i =~ /^in(?:=(.+))?/) {
+	    $In = $1 ne "" ? $1 : "callstack.out";
 	} elsif ($i eq 'append') {
 	    $Append = 1;
 	} else {
@@ -35,6 +37,7 @@ sub import {
 	}
     }
     &set(); # Otherwise we get the import() call stack captured, too.
+    &read($In) if defined $In;
     $Out = "callstack.out" unless defined $Out || $Stdout;
     $Import++; # Import was a success.
 }
@@ -68,6 +71,19 @@ sub write {
 	}
 	select $ofh;
     }
+}
+
+sub read {
+    my $fn = shift;
+    unless (open(IN, $fn)) {
+	die qq[Devel::CallStack::read: failed to open "$fn" for reading: $!\n];
+    }
+    while (<IN>) {
+	my ($s, $d, $n) = split;
+	$s = join(",", reverse split(/,/, $s)) if $Reverse;
+	$Cumul{$s} += $n;
+    }
+    close(IN);
 }
 
 sub END {
@@ -183,12 +199,12 @@ running C<perl -d:CallStack code.pl> will result in:
     main::foo,main::bar 2 800
     main::foo,main::bar,main::zog 3 686
 
-Meaning that C<main::bar> was called 200 times, which makes sense
-since every fifth call out of 1000 should have been made to bar().
-The callstack C<main::bar,main::zog> was reached 171 times, which is
-the number of integers between 0 and 999 (inclusive) that are evenly
-divisible both by five and seven.  The numbers in the second column
-are the callstack depths.
+Meaning that the callstack C<main::bar> was called 200 times, which
+makes sense since every fifth call out of 1000 should have been made
+to bar().  On the other hand, the callstack C<main::bar,main::zog> was
+reached 171 times, which is the number of integers between 0 and 999
+(inclusive) that are evenly divisible both by five and seven.
+The numbers in the second column are the callstack depths.
 
 =head1 PARAMETERS
 
@@ -197,7 +213,7 @@ and a C<=>:
 
     perl -d:CallStack=...
 
-The available parameters are listed in the following.
+The available parameters are as follows:
 
 =head2 Results
 
@@ -276,12 +292,26 @@ Normally the output file is overwritten.  To append instead:
 
    perl -d:CallStack=append
 
+=head2 In
+
+Normally the statistics are started from scratch for each run.
+To read in initial statistics from a file:
+
+   perl -d:CallStack=in=filename
+
+The C<=filename> part is optional, the default filename is
+F<callstack.out>.  The input data needs to be in the same format
+(C<depth>, C<full>, F<reverse>) as the current settings.
+
 =head2 Combining parameters
 
 To use several parameters at the same time, combine the parameters by
 using a comma:
 
    perl -d:CallStack=3,out=my.out,full
+
+If you combine the C<append> and C<in> parameters, you get cumulative
+statistics.
 
 =head1 UTILITY FUNCTIONS
 
@@ -292,12 +322,32 @@ To get a copy of the statistics accumulated so far, call
 The keys of the hash are the callstacks as comma-concatenated strings,
 and the values are the number of calls.
 
-To set the statistics, call Devel::CallStack::set(%C).  To clear the
-statistics, simply call Devel::CallStack::set().
+To set the statistics, call
+
+	Devel::CallStack::set(%C).
+
+To clear the statistics, simply call Devel::CallStack::set() with no
+argument.
 
 To write out the statistics accumulated so far, call
-Devel::CallStack::write().  This overwrites the existing output file
-unless the C<Append> option is used.  You need do any file renaming yourself.
+
+	Devel::CallStack::write()
+
+This overwrites the existing output file (either F<callstack.out> or
+whatever you used for C<out=> or the standard output or error streams)
+unless the C<append> option is used.  You need to do any needed file
+renaming yourself.  write() is used by Devel::CallStack itself to
+output the statistics at the end of a run, by calling it from its
+END block.
+
+To read in the statistics accumulated from a file, call
+
+	Devel::CallStack::read("filename")
+
+This merges in the data instead of replacing.  If you want to replace
+the data, call set() yourself.  read() is used by the C<in> parameter.
+The input data needs to be in the same format (C<depth>, C<full>,
+F<reverse>) as the current settings.
 
 =head1 POSSIBILITIES
 
@@ -362,10 +412,10 @@ SE<eacute>bastien Aperghis-Tramoni for bravely testing the code in Jaguar.
 
 =head1 SEE ALSO
 
-L<perlfunc/caller>, L<Devel::CallerItem>, L<Devel::DumpStack>,
+L<perlfunc/caller>; L<Devel::CallerItem>, L<Devel::DumpStack>,
 L<Devel::StackTrace>, for alternative views of the call stack;
-L<Devel::DProf> and L<Devel::SmallProf> for time-based profiling,
-and L<Devel::Cover> for coverage.
+L<Devel::DProf> and L<Devel::SmallProf> for time-based profiling;
+L<Devel::Cover> for coverage.
 
 =head1 AUTHOR AND COPYRIGHT
 

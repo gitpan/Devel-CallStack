@@ -33,6 +33,7 @@ sub callstack {
     my $arg  = arg(@_ == 0 ? "-d:CallStack" : "-d:CallStack=$_[0]");
     my $code = @_ == 2 ? $_[1] : "code.pl";
     my $cmd = "$perl $lib $arg $code";
+    local $ENV{PERL5OPT}; # [rt.cpan.org: #8702] Devel::CallStack's tests fail when PERL5OPT is loading modules
     print "# $cmd\n";
     if (system($cmd) == 0) {
 	return 1;

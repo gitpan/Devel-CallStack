@@ -13,7 +13,8 @@ t/05_full.t
 t/06_append.t
 t/07_combined.t
 t/08_set.t
-t/09_bad.t
+t/09_read.t
+t/10_bad.t
 t/code.pl
 t/cs1.out
 t/cs2.out
@@ -27,6 +28,8 @@ t/cs6b.out
 t/cs7.out
 t/cs8a.out
 t/cs8b.out
+t/cs9a.out
+t/cs9b.out
 t/reset.pl
 t/set.pl
 t/util.pl

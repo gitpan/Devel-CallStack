@@ -1,3 +1,13 @@
+2004-12-19  Jarkko Hietaniemi  <jhi@iki.fi>
+
+	* Undef (by localizing) $ENV{PERL5OPT} when running the tests.
+	  [rt.cpan.org: Bug #8702 Devel::CallStack's tests fail when PERL5OPT is loading modules]
+	  (affects especially CPANPLUS)
+	
+	* Add the "in" option.
+	
+	* Release 0.19.
+
 2004-12-12  Jarkko Hietaniemi  <jhi@iki.fi>
 
 	* Cleanup the tests and MANIFEST.
