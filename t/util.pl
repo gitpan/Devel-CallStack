@@ -9,10 +9,18 @@ sub arg {
 
 sub callstack {
     my $perl = perl();
-    my $arg  = arg(@_ == 1 ? "-d:CallStack=$_[0]" : "-d:CallStack");
+    my $lib  = arg("-I../lib");
+    my $arg  = arg(@_ == 0 ? "-d:CallStack" : "-d:CallStack=$_[0]");
     my $code = @_ == 2 ? $_[1] : "code.pl";
-    print "# $perl $arg $code\n";
-    return system("$perl $arg $code") == 0;
+    my $cmd = "$perl $lib $arg $code";
+    print "# $cmd\n";
+    if (system($cmd) == 0) {
+	return 1;
+    } else {
+	use Cwd;
+	my $cwd = getcwd();
+	die qq[$0: running '$cmd' failed: ($?) (cwd $cwd)\n];
+    }
 }
 
 sub file_equal {
@@ -24,17 +32,19 @@ sub file_equal {
 		$fl1 =~ s/\r?\n?$//;
 		$fl2 =~ s/\r?\n?$//;
 		if ($fl1 ne $fl2) {
-		    $equal = 1;
+		    $equal = 0;
 		    last;
 		}
 	    }
+	    close($fh2);
 	} else {
 	    return undef;
 	}
+	close($fh1);
     } else {
 	return undef;
     }
-    return 0 unless $equal;
+    return $equal;
 }
 
 1;

@@ -4,12 +4,14 @@ META.yml
 Makefile.PL
 README
 lib/Devel/CallStack.pm
+t/00_use.t
 t/01_basic.t
 t/01_out.t
 t/02_depth.t
 t/03_reverse.t
 t/04_full.t
 t/05_combined.t
+t/09_bad.t
 t/code.pl
 t/cs1.out
 t/cs2a.out

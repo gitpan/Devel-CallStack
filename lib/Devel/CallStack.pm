@@ -4,9 +4,10 @@ use strict;
 
 use vars qw($VERSION
 	    $Depth $Full $Reverse $Stdout $Stderr $Out
-	    $Import %Cumul $Pred %Pred %Succ);
+	    $Import
+	    %Cumul);
 
-$VERSION = '0.11';
+$VERSION = '0.12';
 $Depth = 1e9;
 $Import = 0;
 
@@ -30,10 +31,8 @@ sub import {
 	}
     }
     %Cumul = (); # Otherwise we get the import() call stack captured, too.
-    %Pred = %Succ = ();
-    undef $Pred;
     $Out = "callstack.out" unless defined $Out || $Stdout;
-    $Import++;
+    $Import++; # Import was a success.
 }
 
 sub END {
@@ -247,9 +246,14 @@ using a comma:
 
    perl -d:CallStack=3,out=my.out,full
 
+=head1 KNOWN PROBLEMS
+
+On Jaguar (X.2.6) with the default Perl (5.6.0) the test suite refuses
+to run due to mysterious problems.  The Makefile.PL will warn of this.
+
 =head1 ACKNOWLEDGEMENTS
 
-Devel::SmallProf for giving a hint of how to write tests for -d:Xyz.
+SE<eacute>bastien Aperghis-Tramoni for bravely testing the code in Jaguar.
 
 =head1 SEE ALSO
 

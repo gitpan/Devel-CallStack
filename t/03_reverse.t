@@ -2,8 +2,8 @@ use Test::More tests => 1;
 
 BEGIN {
     chdir "t" if -d "t";
-    use lib qw(. ../lib);
-    require "./util.pl";
+    use lib qw(.);
+    require "util.pl";
 }
 
 sub cleanup {
@@ -11,14 +11,13 @@ sub cleanup {
 }
 
 cleanup();
+
 if (callstack("reverse")) {
     if (-e "callstack.out") {
 	ok(file_equal("callstack.out", "cs3.out"));
     } else {
 	die "failed to create callstack.out\n";
     }
-} else {
-    die "$0: running perl -d:CallStack failed: ($?)\n";
 }
 
 END {

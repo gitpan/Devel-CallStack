@@ -2,8 +2,8 @@ use Test::More tests => 1;
 
 BEGIN {
     chdir "t" if -d "t";
-    use lib qw(. ../lib);
-    require "./util.pl";
+    use lib qw(.);
+    require "util.pl";
 }
 
 sub cleanup {

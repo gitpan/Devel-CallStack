@@ -1,3 +1,17 @@
+2004-11-25  Jarkko Hietaniemi  <jhi@iki.fi>
+
+	* Make tests more verbose in case of failure.
+	
+	* Add a test for a bad import.
+
+	* Remove unimplemented cruft from the .pm.
+
+	* Clean up and verbosify the tests.
+	
+	* Document the Jaguar problem.
+	
+	* Release 0.12.
+
 2004-11-24  Jarkko Hietaniemi  <jhi@iki.fi>
 
 	* Release 0.11: forgot to package the tests in 0.10.
