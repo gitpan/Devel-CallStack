@@ -7,7 +7,7 @@ use vars qw($VERSION
 	    $Import
 	    %Cumul);
 
-$VERSION = '0.13';
+$VERSION = '0.14';
 $Depth = 1e9;
 $Import = 0;
 
@@ -89,7 +89,9 @@ sub sub {
 		push @s, $c[3];
 	    }
 	}
-	$Cumul{ join ",", $Reverse ? @s : reverse @s }++;
+	$Cumul{
+	       join ",", $Reverse ? @s : reverse @s # Ironic, no?
+	      }++;
     }
     no strict 'refs';
     &{$DB::sub}(@_);

@@ -1,4 +1,10 @@
-2004-11-26  Jarkko Hietaniemi  <jhi@iki.fi>
+2004-11-29  Jarkko Hietaniemi  <jhi@iki.fi>
+
+	* Broken permissions in CallStack.pm.
+	
+	* Release 0.14.
+
+2004-11-29  Jarkko Hietaniemi  <jhi@iki.fi>
 
 	* Make file_equal() use lc() in its testing so that places with
 	  case-confused filenames can play, too.
