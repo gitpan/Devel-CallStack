@@ -1,5 +1,7 @@
 package Devel::CallStack;
 
+require 5.006001;
+
 use strict;
 
 use vars qw($VERSION
@@ -7,7 +9,7 @@ use vars qw($VERSION
 	    $Import
 	    %Cumul);
 
-$VERSION = '0.15';
+$VERSION = '0.16';
 $Depth = 1e9; # If someone has a callstack this deep, we are in trouble.
 $Import = 0;
 
@@ -295,8 +297,11 @@ unless the C<Append> option is used.  You need do any file renaming yourself.
 
 =head1 KNOWN PROBLEMS
 
-On Jaguar (X.2.6) with the default Perl (5.6.0) the test suite refuses
-to run due to mysterious problems.  The Makefile.PL will warn of this.
+Devel::CallStack unfortunately works only in 5.6.1 or later Perls, there
+is something different with the -d:Xyz feature that breaks Devel::CallStack,
+one would get something like this:
+
+   syntax error at code.pl line 0, near "use Devel::CallStack="
 
 =head1 ACKNOWLEDGEMENTS
 
