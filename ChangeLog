@@ -1,3 +1,9 @@
+2005-01-27  Jarkko Hietaniemi  <jhi@iki.fi>
+
+	* Just minor documentation tweaks, no functional changes.
+	
+	* Release 0.19.
+
 2004-12-19  Jarkko Hietaniemi  <jhi@iki.fi>
 
 	* Undef (by localizing) $ENV{PERL5OPT} when running the tests.
@@ -6,7 +12,7 @@
 	
 	* Add the "in" option.
 	
-	* Release 0.19.
+	* Release 0.18.
 
 2004-12-12  Jarkko Hietaniemi  <jhi@iki.fi>
 

@@ -9,7 +9,7 @@ use vars qw($VERSION
 	    $Import
 	    %Cumul);
 
-$VERSION = '0.18';
+$VERSION = '0.19';
 $Depth = 1e9; # If someone has a callstack this deep, we are in trouble.
 $Import = 0;
 
@@ -137,7 +137,7 @@ __END__
 
 =head1 NAME
 
-Devel::CallStack - record the subroutine calling stacks
+Devel::CallStack - record the calling stacks
 
 =head1 SYNOPSIS
 
@@ -147,16 +147,16 @@ Devel::CallStack - record the subroutine calling stacks
 
 The Devel::CallStack is meant for code developers wondering why their
 code is running so slow.  One possible reason is simply too many
-subroutine (method) calls since they are not cheap in Perl.
+subroutine or method calls since they are not cheap in Perl.
 
-The Devel::CallStack records the subroutine calling stacks, how many
-times each calling stack is being called.  By default the results are
-written to a file called F<callstack.out>.
+The Devel::CallStack records the calling stacks, how many times each
+calling stack is being called.  By default the results are written to
+a file called F<callstack.out>.
 
-B<NOTE:> counting the callstacks is a very heavy operation which slows
-down the execution of your code easily ten-fold or more: do not
-attempt any other code timing or profiling at the same time.  The
-gathered information is useful in conjunction with other profiling
+B<NOTE:> recording the callstacks is a very heavy operation which
+slows down the execution of your code easily ten-fold or more: do
+not attempt any other code timing or profiling at the same time.
+The gathered information is useful in conjunction with other profiling
 tools such as C<Devel::DProf>.
 
 =head1 MOTIVATION
@@ -204,7 +204,8 @@ makes sense since every fifth call out of 1000 should have been made
 to bar().  On the other hand, the callstack C<main::bar,main::zog> was
 reached 171 times, which is the number of integers between 0 and 999
 (inclusive) that are evenly divisible both by five and seven.
-The numbers in the second column are the callstack depths.
+The numbers in the second column are the callstack depths
+(the number of commas plus one).
 
 =head1 PARAMETERS
 
@@ -215,7 +216,7 @@ and a C<=>:
 
 The available parameters are as follows:
 
-=head2 Results
+=head2 Out
 
 The results are written by default to a file called F<callstack.out>.
 This can be changed either with
@@ -234,7 +235,7 @@ or the standard error, respectively.
 
 By default the calling stacks are walked all the way back to the
 beginning.  This may be very expensive if the calling stacks are deep.
-To limit the number of frames walked back, supply the C<depth> argument:
+To limit the number of frames walked back, supply the C<depth> parameter:
 
    perl -d:CallStack=depth=N
 
@@ -259,9 +260,9 @@ subroutine was called:
 =head2 Reverse
 
 By default the callstacks go from left to right, that is, the callers
-are on the left and the callees are on the right.  With the C<reverse>
-parameter you can flip the order, which may fit your brain better.
-For our example:
+are on the left and the callees are on the right, the time flows from
+left to right.  With the C<reverse> parameter you can flip the order,
+which may fit your brain better.  For our example:
 
     main::bar 1 200
     main::bar,main::foo 2 800
@@ -271,9 +272,9 @@ For our example:
 
 =head2 Full
 
-By default only the names of the called subroutines are recorded.
-To record also the filename and (calling) linenumber in the file,
-use the C<full> parameter:
+By default only the names of the called subroutines (methods) are
+recorded.  To record also the filename and (calling) linenumber in the
+file, use the C<full> parameter:
 
    perl -d:CallStack=full
 
@@ -334,11 +335,11 @@ To write out the statistics accumulated so far, call
 	Devel::CallStack::write()
 
 This overwrites the existing output file (either F<callstack.out> or
-whatever you used for C<out=> or the standard output or error streams)
-unless the C<append> option is used.  You need to do any needed file
-renaming yourself.  write() is used by Devel::CallStack itself to
-output the statistics at the end of a run, by calling it from its
-END block.
+whatever you used for the C<out> parameter or the standard output or
+error streams) unless the C<append> parameter is used.  You need to do
+any needed file renaming yourself.  write() is used by
+Devel::CallStack itself to output the statistics at the end of a run,
+by calling it from its END block.
 
 To read in the statistics accumulated from a file, call
 
@@ -360,30 +361,32 @@ while the upper layers are called only a few times:
 
 =item *
 
-First of all try your code with different input: how does the number
-of calls vary?  Linear, logarithmic, squared, cubed?  Have you picked
-the right algorithm?  You are not reimplementing something from the
-Perl core that might have either a better algorithm or simply a faster
+First of all try your code with different input and with different
+amount of input: how does the number of calls vary?  Linear,
+logarithmic, squared, cubed, random?  Have you picked the right
+algorithm?  You are not reimplementing something from the Perl core
+that might have either a better algorithm or simply a faster
 implementation?  (For example sort().)
 
 =item *
 
 You may manually inline the method or subroutine code to its callers.
-Downsides include harder maintenance (remember to document/comment the
-inlining both to the callers and to the original code), upsides
-include faster execution.
+The downsides include harder maintenance (remember to document/comment
+the inlining both to the callers and to the original code), the upsides
+include faster execution.  Maybe you can somehow automate the inlining,
+for example via Perl source filters?
 
 =item *
 
 You may manually or (preferably) automatically cache the computation,
 whenever reasonable and possible.  Use for example the L<Memoize>
-module.  Downsides include more memory usage, upsides include faster
-execution.
+module.  The downsides include more memory usage, upsides include
+faster execution.
 
 =back
 
-If you see certain deepish code paths having only a few callers
-(or even just a single one):
+If you see some deep code paths having only a few callers (or maybe
+even just a single one):
 
 =over 4
 
@@ -392,17 +395,17 @@ If you see certain deepish code paths having only a few callers
 Maybe you have several layers of subroutines calling each other always
 along the same paths - you could possibly collapse/inline several
 levels of these subroutines into fewer ones, or even just a single one.
-(If you still need to have some of the intermediate functions
+If you still need to have some of the intermediate functions
 separately, you may consider maintaining separate functions for those,
-but remember to document/comment the fact profusely.)
+but remember to document/comment the fact profusely.
 
 =back
 
 =head1 KNOWN PROBLEMS
 
-Devel::CallStack unfortunately works only in 5.6.1 or later Perls, there
-is something different with the -d:Xyz feature that breaks Devel::CallStack,
-one would get something like this:
+Devel::CallStack unfortunately works only in 5.6.1 or later Perls,
+there is something different with the C<-d:Xyz> option of older Perls
+that breaks Devel::CallStack, one would get something like this:
 
    syntax error at code.pl line 0, near "use Devel::CallStack="
 
@@ -419,7 +422,7 @@ L<Devel::Cover> for coverage.
 
 =head1 AUTHOR AND COPYRIGHT
 
-Jarkko Hietaniemi <jhi@iki.fi> 2004
+Jarkko Hietaniemi <jhi@iki.fi> 2004-2005
 
 =head1 LICENSE
 
