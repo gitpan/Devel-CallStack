@@ -1,5 +1,25 @@
+use File::Spec;
+
+my $perl;
+
 sub perl {
-    my $perl = $^X =~ m/\s/ ? qq{"$^X"} : $^X;
+    unless (defined $perl) {
+	my $Makefile = File::Spec->catfile(File::Spec->updir, "Makefile");
+	if (open(MAKEFILE, $Makefile)) {
+	    while (<MAKEFILE>) {
+		if (/^PERL = (.+)/) {
+		    $perl = $1;
+		    last;
+		}
+	    }
+	    close(MAKEFILE);
+	}
+	unless (defined $perl) {
+	    $perl = $^X;
+	    $perl = $perl =~ m/\s/ ? qq{"$perl"} : $perl;
+	}
+	print "# perl = $perl\n";
+    }
     return $perl;
 }
 
@@ -31,7 +51,7 @@ sub file_equal {
 	    while (defined(my $fl1 = <$fh1>) && defined(my $fl2 = <$fh2>)) {
 		$fl1 =~ s/\r?\n?$//;
 		$fl2 =~ s/\r?\n?$//;
-		if ($fl1 ne $fl2) {
+		if (lc($fl1) ne lc($fl2)) {
 		    $equal = 0;
 		    last;
 		}

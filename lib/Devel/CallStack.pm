@@ -7,7 +7,7 @@ use vars qw($VERSION
 	    $Import
 	    %Cumul);
 
-$VERSION = '0.12';
+$VERSION = '0.13';
 $Depth = 1e9;
 $Import = 0;
 
@@ -62,27 +62,34 @@ use strict;
 
 sub DB { }
 
+use vars qw($Full $Depth $Reverse %Cumul);
+
+*Depth   = \$Devel::CallStack::Depth;
+*Full    = \$Devel::CallStack::Full;
+*Reverse = \$Devel::CallStack::Reverse;
+*Cumul   = \%Devel::CallStack::Cumul;
+
 sub sub {
     if (my ($p, $s) = ($DB::sub =~ /^(.+)::(.+)/)) {
 	my @s;
-	if ($Devel::CallStack::Full) {
-	    my ($f, $l) = ($DB::sub{$DB::sub} =~ /^(.+):(\d+)/);
-	    @s = ( "$f:$l:$p:$s" );
+	if ($Full) {
+	    if (my ($f, $l) = ($DB::sub{$DB::sub} =~ /^(.+):(\d+)/)) {
+		@s = ( "$f:$l:$p:$s" );
+		for (my $i = 0; @s < $Depth; $i++) {
+		    my @c = caller($i);
+		    last unless @c;
+		    push @s, "$c[1]:$c[2]:$c[3]";
+		}
+	    }
 	} else {
 	    @s = ( $DB::sub );
-	}
-	for (my $i = 0; @s < $Devel::CallStack::Depth; $i++) {
-	    my @c = caller($i);
-	    last unless @c;
-	    if ($Devel::CallStack::Full) {
-		$c[3] =~ s/^(.+):://;
-		$c[0] = $1;
-		push @s, "$c[1]:$c[2]:$c[0]::$c[3]";
-	    } else {
+	    for (my $i = 0; @s < $Depth; $i++) {
+		my @c = caller($i);
+		last unless @c;
 		push @s, $c[3];
 	    }
 	}
-	$Devel::CallStack::Cumul{ join ",", $Devel::CallStack::Reverse ? @s : reverse @s }++;
+	$Cumul{ join ",", $Reverse ? @s : reverse @s }++;
     }
     no strict 'refs';
     &{$DB::sub}(@_);
@@ -258,10 +265,17 @@ SE<eacute>bastien Aperghis-Tramoni for bravely testing the code in Jaguar.
 =head1 SEE ALSO
 
 L<perlfunc/caller>, L<Devel::CallerItem>, L<Devel::DumpStack>,
-L<Devel::StackTrace>.
+L<Devel::StackTrace>, for alternative views of the call stack;
+L<Devel::DProf>, L<Devel::Cover>, L<Devel::SmallProf> for time-based
+profiling.
 
 =head1 AUTHOR AND COPYRIGHT
 
 Jarkko Hietaniemi <jhi@iki.fi> 2004
+
+=head1 LICENSE
+
+This program is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
 
 =cut
