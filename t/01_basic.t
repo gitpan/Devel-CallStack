@@ -21,6 +21,6 @@ if (callstack()) {
 }
 
 END {
-    cleanup();
+#    cleanup();
 }
 

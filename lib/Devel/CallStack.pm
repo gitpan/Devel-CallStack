@@ -3,12 +3,12 @@ package Devel::CallStack;
 use strict;
 
 use vars qw($VERSION
-	    $Depth $Full $Reverse $Stdout $Stderr $Out
+	    $Depth $Full $Reverse $Stdout $Stderr $Out $Append
 	    $Import
 	    %Cumul);
 
-$VERSION = '0.14';
-$Depth = 1e9;
+$VERSION = '0.15';
+$Depth = 1e9; # If someone has a callstack this deep, we are in trouble.
 $Import = 0;
 
 sub import {
@@ -26,34 +26,50 @@ sub import {
 	    $Stderr = 1;
 	} elsif ($i =~ /^out=(.+)/) {
 	    $Out = $1;
+	} elsif ($i eq 'append') {
+	    $Append = 1;
 	} else {
 	    die "Devel::CallStack::import: '$i' unknown\n";
 	}
     }
-    %Cumul = (); # Otherwise we get the import() call stack captured, too.
+    &set(); # Otherwise we get the import() call stack captured, too.
     $Out = "callstack.out" unless defined $Out || $Stdout;
     $Import++; # Import was a success.
 }
 
-sub END {
+sub set {
+    %Cumul = @_;
+}
+
+sub get {
+    %Cumul;
+}
+
+sub write {
     if ($Import) {
-	my $fh;
+	my $ofh;
 	if ($Stdout) {
-	    $fh = select STDOUT;
+	    $ofh = select STDOUT;
 	} elsif ($Stderr) {
-	    $fh = select STDERR;
+	    $ofh = select STDERR;
 	} elsif (defined $Out) {
-	    unless (open(OUT, ">$Out")) {
+	    my $mode = $Append ? ">>" : ">";
+	    unless (open(OUT, "$mode$Out")) {
 		die qq[Devel::CallStack::END: failed to open "$Out" for writing: $!\n];
 	    }
-	    $fh = select OUT;
+	    $ofh = select OUT;
 	}
 	for my $s (sort keys %Cumul) {
+	    next if $s =~ /Devel::CallStack/o; # We do not exist.
 	    my $d = ($s =~ tr/,/,/) + 1;
 	    print "$s $d $Cumul{$s}\n";
 	}
-	select $fh;
+	select $ofh;
     }
+}
+
+sub END {
+    &write();
 }
 
 package DB;
@@ -74,7 +90,7 @@ sub sub {
 	my @s;
 	if ($Full) {
 	    if (my ($f, $l) = ($DB::sub{$DB::sub} =~ /^(.+):(\d+)/)) {
-		@s = ( "$f:$l:$p:$s" );
+		@s = ( "$f:$l:${p}::$s" );
 		for (my $i = 0; @s < $Depth; $i++) {
 		    my @c = caller($i);
 		    last unless @c;
@@ -234,19 +250,25 @@ For our example:
 =head2 Full
 
 By default only the names of the called subroutines are recorded.
-To record also the filename and (calling) line in the file, use the
-C<full> parameter:
+To record also the filename and (calling) linenumber in the file,
+use the C<full> parameter:
 
    perl -d:CallStack=full
 
 The filename and the linenumber are prepended to the subname,
-for our example:
+all concatenated with single colons, for our example:
 
-    code.pl:1:main:foo 1 800
-    code.pl:2:main:bar 1 200
-    code.pl:5:main::bar,code.pl:3:main:zog 2 171
-    code.pl:5:main::foo,code.pl:1:main::bar,code.pl:3:main:zog 3 686
-    code.pl:5:main::foo,code.pl:2:main:bar 2 800
+    code.pl:1:main::foo 1 800
+    code.pl:2:main::bar 1 200
+    code.pl:5:main::bar,code.pl:3:main::zog 2 171
+    code.pl:5:main::foo,code.pl:1:main::bar,code.pl:3:main::zog 3 686
+    code.pl:5:main::foo,code.pl:2:main::bar 2 800
+
+=head2 Append
+
+Normally the output file is overwritten.  To append instead:
+
+   perl -d:CallStack=append
 
 =head2 Combining parameters
 
@@ -254,6 +276,22 @@ To use several parameters at the same time, combine the parameters by
 using a comma:
 
    perl -d:CallStack=3,out=my.out,full
+
+=head1 UTILITY FUNCTIONS
+
+To get a copy of the statistics accumulated so far, call
+
+	my %C = Devel::CallStack::get();
+
+The keys of the hash are the callstacks as comma-concatenated strings,
+and the values are the number of calls.
+
+To set the statistics, call Devel::CallStack::set(%C).  To clear the
+statistics, simply call Devel::CallStack::set().
+
+To write out the statistics accumulated so far, call
+Devel::CallStack::write().  This overwrites the existing output file
+unless the C<Append> option is used.  You need do any file renaming yourself.
 
 =head1 KNOWN PROBLEMS
 
@@ -268,8 +306,8 @@ SE<eacute>bastien Aperghis-Tramoni for bravely testing the code in Jaguar.
 
 L<perlfunc/caller>, L<Devel::CallerItem>, L<Devel::DumpStack>,
 L<Devel::StackTrace>, for alternative views of the call stack;
-L<Devel::DProf>, L<Devel::Cover>, L<Devel::SmallProf> for time-based
-profiling.
+L<Devel::DProf> and L<Devel::SmallProf> for time-based profiling,
+and L<Devel::Cover> for coverage.
 
 =head1 AUTHOR AND COPYRIGHT
 

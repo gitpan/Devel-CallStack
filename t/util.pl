@@ -47,13 +47,18 @@ sub file_equal {
     my ($fn1, $fn2) = @_;
     my $equal = 1;
     if (open(my $fh1, $fn1)) {
+	my ($fl1, $fl2);
 	if (open(my $fh2, $fn2)) {
-	    while (defined(my $fl1 = <$fh1>) && defined(my $fl2 = <$fh2>)) {
+	    while ($equal) {
+		$fl1 = <$fh1>;
+		$fl2 = <$fh2>;
+		last unless defined($fl1) && defined($fl2);
 		$fl1 =~ s/\r?\n?$//;
 		$fl2 =~ s/\r?\n?$//;
 		if (lc($fl1) ne lc($fl2)) {
-		    $equal = 0;
-		    last;
+		    print "# mismatch:\n";
+		    print "# got:      $fl1\n";
+		    print "# expected: $fl2\n";
 		}
 	    }
 	    close($fh2);
@@ -61,6 +66,13 @@ sub file_equal {
 	    return undef;
 	}
 	close($fh1);
+	if (defined($fl1)) {
+	    print "# $fn2 ended but $fn1 not ($fl1)\n";
+	    $equal = 0;
+	} elsif (defined($fl2)) {
+	    print "# $fn1 ended but $fn2 not ($fl2)\n";
+	    $equal = 0;
+	}
     } else {
 	return undef;
     }
