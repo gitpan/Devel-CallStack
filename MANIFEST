@@ -1,5 +1,22 @@
-lib/Devel/CallStack.pm
+ChangeLog
 MANIFEST
+META.yml
 Makefile.PL
 README
-META.yml                                 Module meta-data (added by MakeMaker)
+lib/Devel/CallStack.pm
+t/01_basic.t
+t/01_out.t
+t/02_depth.t
+t/03_reverse.t
+t/04_full.t
+t/05_combined.t
+t/code.pl
+t/cs1.out
+t/cs2a.out
+t/cs2b.out
+t/cs2c.out
+t/cs3.out
+t/cs4.out
+t/cs5.out
+t/test.pl
+t/util.pl

@@ -6,7 +6,7 @@ use vars qw($VERSION
 	    $Depth $Full $Reverse $Stdout $Stderr $Out
 	    $Import %Cumul $Pred %Pred %Succ);
 
-$VERSION = '0.10';
+$VERSION = '0.11';
 $Depth = 1e9;
 $Import = 0;
 
@@ -38,20 +38,22 @@ sub import {
 
 sub END {
     if ($Import) {
+	my $fh;
 	if ($Stdout) {
-	    select STDOUT;
+	    $fh = select STDOUT;
 	} elsif ($Stderr) {
-	    select STDERR;
+	    $fh = select STDERR;
 	} elsif (defined $Out) {
 	    unless (open(OUT, ">$Out")) {
 		die qq[Devel::CallStack::END: failed to open "$Out" for writing: $!\n];
 	    }
-	    select OUT;
+	    $fh = select OUT;
 	}
 	for my $s (sort keys %Cumul) {
 	    my $d = ($s =~ tr/,/,/) + 1;
 	    print "$s $d $Cumul{$s}\n";
 	}
+	select $fh;
     }
 }
 
@@ -102,16 +104,39 @@ Devel::CallStack - record the subroutine calling stacks
 =head1 DESCRIPTION
 
 The Devel::CallStack records the subroutine calling stacks, how many
-times each calling stack is being called.  B<NOTE:> this is a very
-heavy operation which slows down the execution of your code easily
-ten-fold or more: do not attempt any other code profiling at the same
-time.  The gathered information is useful in conjunction with other
-profiling tools such as C<Devel::DProf>.  By default the results are
+times each calling stack is being called.  By default the results are
 written to a file called F<callstack.out>.
+
+B<NOTE:> counting the callstacks is a very heavy operation which slows
+down the execution of your code easily ten-fold or more: do not
+attempt any other code timing or profiling at the same time.  The
+gathered information is useful in conjunction with other profiling
+tools such as C<Devel::DProf>.
+
+=head1 MOTIVATION
+
+I got frustrated by C<Devel::DProf> results that looked not unlike this:
+
+  Total Elapsed Time = 1.892063 Seconds
+    User+System Time = 1.742063 Seconds
+  Exclusive Times
+  %Time ExclSec CumulS #Calls sec/call Csec/c  Name
+   13.8   0.241  0.426   2170   0.0001 0.0002  Foo::_id
+   10.3   0.181  0.181   1747   0.0001 0.0001  Foo::Map::has
+   9.18   0.160  0.434      3   0.0532 0.1448  main::BEGIN
+   8.21   0.143  0.143   5205   0.0000 0.0000  Foo::Map::_has
+   7.46   0.130  0.611      1   0.1299 0.6112  Foo::Map::new
+   ...
+
+I obviously needed to try cutting down the number of C<Foo::_id> calls
+(not to mention the number of C<Foo::Map::_has> and C<Foo::Map::_has>
+calls), but the problem was that C<Foo::_id> was being called from
+multiple places, there were more than one possible "hot path" that
+I needed to locate and "cool down".
 
 =head1 EXAMPLE
 
-For this file, F<test.pl>:
+For this file, F<code.pl>:
 
     sub foo { bar(@_) }
     sub bar { zog(@_) if $_[0] % 7 }
@@ -120,7 +145,7 @@ For this file, F<test.pl>:
 	$i % 5 ? foo($i) : bar($i);
     }
 
-running C<perl -d:CallStack test.pl> will result in:
+running C<perl -d:CallStack code.pl> will result in:
 
     main::bar 1 200
     main::bar,main::zog 2 171
@@ -171,8 +196,32 @@ or just
 
    perl -d:CallStack=N
 
+Using callstack depth two for for our example:
+
+    main::bar 1 200
+    main::bar,main::zog 2 857
+    main::foo 1 800
+    main::foo,main::bar 2 800
+
 Using the depth of one (or zero) gives the number of times each
-subroutine was called.
+subroutine was called:
+
+    main::bar 1 1000
+    main::foo 1 800
+    main::zog 1 857
+
+=head2 Reverse
+
+By default the callstacks go from left to right, that is, the callers
+are on the left and the callees are on the right.  With the C<reverse>
+parameter you can flip the order, which may fit your brain better.
+For our example:
+
+    main::bar 1 200
+    main::bar,main::foo 2 800
+    main::foo 1 800
+    main::zog,main::bar 2 171
+    main::zog,main::bar,main::foo 3 686
 
 =head2 Full
 
@@ -185,23 +234,11 @@ C<full> parameter:
 The filename and the linenumber are prepended to the subname,
 for our example:
 
-    test.pl:1:main:foo 1 800
-    test.pl:2:main:bar 1 200
-    test.pl:5:main::bar,test.pl:3:main:zog 2 171
-    test.pl:5:main::foo,test.pl:1:main::bar,test.pl:3:main:zog 3 686
-    test.pl:5:main::foo,test.pl:2:main:bar 2 800
-
-=head2 Reverse
-
-By default the callstacks go from left to right, that is, the callers
-are on the left and the callees are on the right.  With the C<reverse>
-parameter you can flip the order.  For our example:
-
-    main::bar 1 200
-    main::bar,main::foo 2 800
-    main::foo 1 800
-    main::zog,main::bar 2 171
-    main::zog,main::bar,main::foo 3 686
+    code.pl:1:main:foo 1 800
+    code.pl:2:main:bar 1 200
+    code.pl:5:main::bar,code.pl:3:main:zog 2 171
+    code.pl:5:main::foo,code.pl:1:main::bar,code.pl:3:main:zog 3 686
+    code.pl:5:main::foo,code.pl:2:main:bar 2 800
 
 =head2 Combining parameters
 
@@ -210,6 +247,10 @@ using a comma:
 
    perl -d:CallStack=3,out=my.out,full
 
+=head1 ACKNOWLEDGEMENTS
+
+Devel::SmallProf for giving a hint of how to write tests for -d:Xyz.
+
 =head1 SEE ALSO
 
 L<perlfunc/caller>, L<Devel::CallerItem>, L<Devel::DumpStack>,
@@ -217,6 +258,6 @@ L<Devel::StackTrace>.
 
 =head1 AUTHOR AND COPYRIGHT
 
-Jarkko Hietaniemi <jhi@iki.fi>
+Jarkko Hietaniemi <jhi@iki.fi> 2004
 
 =cut
